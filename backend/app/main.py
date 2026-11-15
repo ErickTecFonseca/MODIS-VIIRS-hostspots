@@ -4,6 +4,7 @@ from pathlib import Path
 import duckdb
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+import csv
 
 app = FastAPI(title="FireScope API")
 
@@ -296,5 +297,22 @@ def get_analysis(
         "monthly": monthly,
         "confidence": confidence,
         "daynight": daynight,
+        "countries": countries,
+    }
+
+COUNTRIES_FILE = Path(__file__).resolve().parents[2] / "data" / "countries.csv"
+
+@app.get("/countries")
+def get_countries():
+    if not COUNTRIES_FILE.exists():
+        raise HTTPException(404, f"Countries file not found: {COUNTRIES_FILE}")
+
+    with open(COUNTRIES_FILE, newline="", encoding="utf-8-sig") as f:
+        rows = csv.reader(f)
+        next(rows, None)  # salta el encabezado
+        countries = [row[-1].strip() for row in rows if row and row[-1].strip()]
+
+    return {
+        "count": len(countries),
         "countries": countries,
     }
